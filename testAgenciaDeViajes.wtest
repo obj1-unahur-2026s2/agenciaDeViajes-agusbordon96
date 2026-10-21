@@ -1,0 +1,62 @@
+import agenciaDeViajes.*    
+describe "test sobre calculos de valor final" {
+    const coordinadorDePrueba = new Coordinador(rol=guia)
+    const beneficio1 = new BeneficioEspecial(tipo="traslado", costo=1000,estaVigente=true)
+    const beneficio2 = new BeneficioEspecial(tipo="VIP", costo=20000,estaVigente=true)
+    const beneficioNoVigente = new BeneficioEspecial(tipo="Seguro", costo=500,estaVigente=false)
+    test "Un pack nacional sin beneficios vigentes devuelve el mismo precio base" {
+        const packNacionalSimple = new PackNacional(diasDeDuracion = 5, precioBase=10000, coordinador = coordinadorDePrueba, provinciaDestino = "Cordoba")
+        assert.equals(10000, packNacionalSimple.valorFinal())
+  }
+    test "Un pack nacional con 2 beneficios vigentes suma correctamente sus costos al precio base." {
+      const packNacionalConBeneficios = new PackNacional (diasDeDuracion= 5, precioBase = 10000, coordinador = coordinadorDePrueba, provinciaDestino = "Mendoza")
+        packNacionalConBeneficios.agregarBeneficio(beneficio1)
+        packNacionalConBeneficios.agregarBeneficio(beneficio2)
+        packNacionalConBeneficios.agregarBeneficio(beneficioNoVigente)
+
+        assert.equals(31500, packNacionalConBeneficios.valorFinal())
+    }
+    test "Un pack internacional sin beneficios vigentes calcula correctamente el total con el 20% de recargo." {
+        const packInternacional = new PackInternacional(diasDeDuracion = 10, precioBase = 200000, coordinador = coordinadorDePrueba, paisDestino = "Brasil")
+
+        assert.equals(240000, packInternacional.valorFinal())
+    }
+}
+describe "test de comportamiento de coordinador" {
+  test "Un guía motivado con 21 viajes realizados es considerado altamente calificado." {
+    const guiaCalificado = new Coordinador(viajesRealizados = 22, rol = guia, estaMotivado = true)
+
+    assert.that(guiaCalificado.estaCalificado())
+  }
+  test "Un asistente logístico con menos de 3 años de experiencia no es calificado, aunque tenga muchos viajes." {
+    const asistenteInexperto = new Coordinador (rol = asistente, aniosExperiencia = 2, estaMotivado = false )
+    asistenteInexperto.agregarUnViajeRealizado()
+    assert.notThat(asistenteInexperto.estaCalificado())
+  }
+  test "Un acompañante con cualquier cantidad de viajes es siempre calificado si supera los 20." {
+    const acompanianteCalificado = new Coordinador( rol=acompaniante, aniosExperiencia = 1, viajesRealizados = 21 )
+    acompanianteCalificado.agregarUnViajeRealizado()
+
+    assert.that(acompanianteCalificado.estaCalificado())
+  }
+}
+describe "test sobre Packs premiums y Packs Provinciales" {
+    const coordCalificado = new Coordinador (rol=acompaniante, viajesRealizados=25)
+    const packNacionalPremium = new PackNacional (diasDeDuracion = 12, precioBase = 15000, coordinador = coordCalificado, provinciaDestino = "Misiones" )
+test "Queremos saber si un pack es premium. Las condiciones van a depender de cada tipo de pack." {
+    assert.that(packNacionalPremium.esPremium())
+}
+  test "Los Packs provinciales tendrán como dato adicional la cantidad de ciudades a visitar. Deben tener al menos 4 actividades para hacer, visitar más de 5 ciudades y tener al menos 3 beneficios vigentes." {
+    const packProvincial = new PackProvincial (cantidadDeCiudadesVisitadas = 6, diasDeDuracion= 5, precioBase = 1000, coordinador = coordCalificado, provinciaDestino = "Buenos Aires")
+    
+    packProvincial.agregarActividad("actividad 1")
+    packProvincial.agregarActividad("actividad 2")
+    packProvincial.agregarActividad("actividad 3")
+    packProvincial.agregarActividad("actividad 4")
+    packProvincial.agregarBeneficio(new BeneficioEspecial (tipo = "A", costo = 100, estaVigente = true))
+    packProvincial.agregarBeneficio(new BeneficioEspecial(tipo = "B", costo = 100, estaVigente = true))
+    packProvincial.agregarBeneficio(new BeneficioEspecial(tipo = "C", costo = 100, estaVigente = true))
+
+    assert.that(packProvincial.esPremium())
+  }
+}
